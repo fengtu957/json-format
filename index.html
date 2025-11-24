@@ -293,6 +293,39 @@
       const treeView = document.getElementById("tree-view");
       const statusEl = document.getElementById("status");
 
+      const HISTORY_LIMIT = 200;
+      const history = {
+        stack: [],
+        index: -1,
+        push(value) {
+          if (this.index >= 0 && this.stack[this.index] === value) {
+            return;
+          }
+          if (this.index < this.stack.length - 1) {
+            this.stack = this.stack.slice(0, this.index + 1);
+          }
+          this.stack.push(value);
+          if (this.stack.length > HISTORY_LIMIT) {
+            this.stack.shift();
+            this.index = this.stack.length - 1;
+          } else {
+            this.index += 1;
+          }
+        },
+        undo() {
+          if (this.index <= 0) return null;
+          this.index -= 1;
+          return this.stack[this.index];
+        },
+        redo() {
+          if (this.index >= this.stack.length - 1) return null;
+          this.index += 1;
+          return this.stack[this.index];
+        },
+      };
+
+      history.push(inputEl.value || "");
+
       document.getElementById("format-btn").addEventListener("click", () => {
         const canProceed = removeEscapes({ silent: true });
         if (canProceed) {
@@ -317,12 +350,36 @@
       document
         .getElementById("clear-btn")
         .addEventListener("click", () => {
-          inputEl.value = "";
+          setInputValue("");
           treeView.innerHTML =
             '<div class="placeholder">请在左侧输入 JSON</div>';
           updateStatus("内容已清空", "muted");
         });
       document.getElementById("copy-btn").addEventListener("click", copyJson);
+
+      inputEl.addEventListener("input", () => {
+        history.push(inputEl.value);
+      });
+
+      inputEl.addEventListener("keydown", (event) => {
+        if (event.key.toLowerCase() !== "z" || !event.ctrlKey) {
+          return;
+        }
+        event.preventDefault();
+        if (event.shiftKey) {
+          const redoValue = history.redo();
+          if (redoValue !== null) {
+            applyHistoryValue(redoValue);
+            updateStatus("已前进一步", "success");
+          }
+          return;
+        }
+        const undoValue = history.undo();
+        if (undoValue !== null) {
+          applyHistoryValue(undoValue);
+          updateStatus("已回退一步", "success");
+        }
+      });
 
       function formatJson(indent = 2) {
         const raw = inputEl.value.trim();
@@ -336,8 +393,7 @@
           const formatted = indent
             ? JSON.stringify(parsed, null, indent)
             : JSON.stringify(parsed);
-          inputEl.value = formatted;
-          resetInputScroll();
+          setInputValue(formatted);
           renderTree(parsed);
           updateStatus("格式化成功", "success");
         } catch (error) {
@@ -482,12 +538,33 @@
         statusEl.className = `status ${type || ""}`;
       }
 
+      function setInputValue(value, { recordHistory = true } = {}) {
+        inputEl.value = value;
+        resetInputScroll();
+        if (recordHistory) {
+          history.push(value);
+        }
+      }
+
+      function applyHistoryValue(value) {
+        inputEl.value = value;
+        resetInputScroll();
+        safeRenderJson(value);
+      }
+
       function removeEscapes(options = {}) {
         const { silent = false } = options;
         const raw = inputEl.value;
         if (!raw) {
           if (!silent) {
             updateStatus("没有可处理的内容", "muted");
+          }
+          return true;
+        }
+
+        if (isValidJson(raw)) {
+          if (!silent) {
+            updateStatus("当前内容已是合法 JSON，无需去除转义", "muted");
           }
           return true;
         }
@@ -501,8 +578,7 @@
 
         try {
           const unescaped = decodeJsonEscapes(raw);
-          inputEl.value = unescaped;
-          resetInputScroll();
+          setInputValue(unescaped);
           if (!silent) {
             updateStatus("已去除转义", "success");
           }
@@ -523,8 +599,7 @@
 
         try {
           const escaped = JSON.stringify(raw).slice(1, -1);
-          inputEl.value = escaped;
-          resetInputScroll();
+          setInputValue(escaped);
           updateStatus("已添加转义字符", "success");
         } catch (error) {
           updateStatus(`添加转义失败：${error.message}`, "error");
@@ -570,8 +645,7 @@
           /[\u0080-\uFFFF]/g,
           (char) => "\\u" + char.charCodeAt(0).toString(16).padStart(4, "0")
         );
-        inputEl.value = converted;
-        resetInputScroll();
+        setInputValue(converted);
         updateStatus("已转换为 Unicode 转义", "success");
       }
 
@@ -585,8 +659,7 @@
           /\\u([0-9a-fA-F]{4})/g,
           (_, code) => String.fromCharCode(parseInt(code, 16))
         );
-        inputEl.value = converted;
-        resetInputScroll();
+        setInputValue(converted);
         updateStatus("已将 Unicode 转义还原为中文", "success");
         safeRenderJson(converted);
       }
@@ -594,6 +667,15 @@
       function resetInputScroll() {
         inputEl.scrollLeft = 0;
         inputEl.scrollTop = 0;
+      }
+
+      function isValidJson(text) {
+        try {
+          JSON.parse(text);
+          return true;
+        } catch (_) {
+          return false;
+        }
       }
     </script>
   </body>
