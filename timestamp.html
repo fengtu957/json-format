@@ -249,7 +249,7 @@
         padding: 20px;
         background: linear-gradient(135deg, rgba(31, 122, 236, 0.1), rgba(18, 184, 134, 0.1));
         border-radius: 8px;
-        margin-bottom: 20px;
+        margin: 20px clamp(16px, 4vw, 48px) 0;
       }
 
       .current-time-label {
@@ -284,63 +284,63 @@
     <nav class="sidebar">
       <a href="index.html" class="sidebar-link" title="JSON 格式化">{ }</a>
       <a href="base64.html" class="sidebar-link" title="Base64 编码">B64</a>
-      <a href="timestamp.html" class="sidebar-link active" title="时间戳转换">🕐</a>
+      <a href="timestamp.html" class="sidebar-link active" title="时间戳转换">TS</a>
     </nav>
     <div class="main-content">
-    <main>
-      <section class="panel">
-        <div class="panel-header">
-          <span>时间戳转时间</span>
-        </div>
-        <div class="panel-content">
-          <div class="current-time" id="current-time-display">
-            <div class="current-time-label">当前时间戳</div>
-            <div class="current-time-value" id="current-timestamp">-</div>
-            <div class="current-time-date" id="current-datetime">-</div>
+      <div class="current-time" id="current-time-display">
+        <div class="current-time-label">当前时间戳</div>
+        <div class="current-time-value" id="current-timestamp">-</div>
+        <div class="current-time-date" id="current-datetime">-</div>
+      </div>
+
+      <main>
+        <section class="panel">
+          <div class="panel-header">
+            <span>时间戳转时间</span>
           </div>
+          <div class="panel-content">
+            <div class="input-group">
+              <label class="input-label">输入时间戳（秒或毫秒）</label>
+              <input type="text" id="timestamp-input" placeholder="例如：1702368000 或 1702368000000" />
+            </div>
 
-          <div class="input-group">
-            <label class="input-label">输入时间戳（秒或毫秒）</label>
-            <input type="text" id="timestamp-input" placeholder="例如：1702368000 或 1702368000000" />
+            <div class="panel-actions">
+              <button class="primary" id="convert-timestamp-btn">转换为时间</button>
+              <button id="use-current-btn">使用当前时间戳</button>
+              <button id="copy-timestamp-btn">复制时间戳</button>
+            </div>
+
+            <div id="timestamp-results" style="margin-top: 20px;"></div>
           </div>
+          <div class="status" id="timestamp-status">等待输入...</div>
+        </section>
 
-          <div class="panel-actions">
-            <button class="primary" id="convert-timestamp-btn">转换为时间</button>
-            <button id="use-current-btn">使用当前时间戳</button>
-            <button id="copy-timestamp-btn">复制时间戳</button>
+        <section class="panel">
+          <div class="panel-header">
+            <span>时间转时间戳</span>
           </div>
+          <div class="panel-content">
+            <div class="input-group">
+              <label class="input-label">选择日期和时间</label>
+              <input type="datetime-local" id="datetime-input" />
+            </div>
 
-          <div id="timestamp-results" style="margin-top: 20px;"></div>
-        </div>
-        <div class="status" id="timestamp-status">等待输入...</div>
-      </section>
+            <div class="input-group">
+              <label class="input-label">或手动输入时间字符串</label>
+              <input type="text" id="datetime-string-input" placeholder="例如：2024-12-12 10:30:00 或 2024/12/12" />
+            </div>
 
-      <section class="panel">
-        <div class="panel-header">
-          <span>时间转时间戳</span>
-        </div>
-        <div class="panel-content">
-          <div class="input-group">
-            <label class="input-label">选择日期和时间</label>
-            <input type="datetime-local" id="datetime-input" />
+            <div class="panel-actions">
+              <button class="primary" id="convert-datetime-btn">转换为时间戳</button>
+              <button id="use-now-btn">使用当前时间</button>
+              <button id="copy-result-btn">复制结果</button>
+            </div>
+
+            <div id="datetime-results" style="margin-top: 20px;"></div>
           </div>
-
-          <div class="input-group">
-            <label class="input-label">或手动输入时间字符串</label>
-            <input type="text" id="datetime-string-input" placeholder="例如：2024-12-12 10:30:00 或 2024/12/12" />
-          </div>
-
-          <div class="panel-actions">
-            <button class="primary" id="convert-datetime-btn">转换为时间戳</button>
-            <button id="use-now-btn">使用当前时间</button>
-            <button id="copy-result-btn">复制结果</button>
-          </div>
-
-          <div id="datetime-results" style="margin-top: 20px;"></div>
-        </div>
-        <div class="status" id="datetime-status">等待输入...</div>
-      </section>
-    </main>
+          <div class="status" id="datetime-status">等待输入...</div>
+        </section>
+      </main>
     </div>
 
     <script>
